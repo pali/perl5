@@ -6780,15 +6780,12 @@ yyl_my(pTHX_ char *s, I32 my)
     OPERATOR(MY);
 }
 
-static int yyl_try(pTHX_ char, char*, STRLEN, I32, GV*, GV**, U8, U32, const bool);
+static int yyl_try(pTHX_ char, char*, STRLEN, U8, const bool);
 
-#define RETRY() yyl_try(aTHX_ 0, s, len, orig_keyword, gv, gvp, \
-                        formbrack, fake_eof, saw_infix_sigil)
+#define RETRY() yyl_try(aTHX_ 0, s, len, 0, 0)
 
 static int
-yyl_eol(pTHX_ char *s, STRLEN len,
-        I32 orig_keyword, GV *gv, GV **gvp,
-        U8 formbrack, U32 fake_eof, const bool saw_infix_sigil)
+yyl_eol(pTHX_ char *s, STRLEN len)
 {
     if (PL_lex_state != LEX_NORMAL
         || (PL_in_eval && !PL_rsfp && !PL_parser->filtered))
@@ -6832,9 +6829,7 @@ yyl_eol(pTHX_ char *s, STRLEN len,
 }
 
 static int
-yyl_fake_eof(pTHX_ U32 fake_eof, bool bof, char *s, STRLEN len,
-             I32 orig_keyword, GV *gv, GV **gvp,
-             U8 formbrack, const bool saw_infix_sigil)
+yyl_fake_eof(pTHX_ U32 fake_eof, bool bof, char *s, STRLEN len)
 {
     char *d;
 
@@ -7206,11 +7201,11 @@ yyl_strictwarn_bareword(pTHX_ const char lastchar)
 
 static int
 yyl_try(pTHX_ char initial_state, char *s, STRLEN len,
-        I32 orig_keyword, GV *gv, GV **gvp,
-        U8 formbrack, U32 fake_eof, const bool saw_infix_sigil)
+        U8 formbrack, const bool saw_infix_sigil)
 {
     char *d;
     bool bof = FALSE;
+    GV *gv = NULL, **gvp = NULL;
 
     switch (initial_state) {
     case '}': goto rightbracket;
@@ -7225,8 +7220,7 @@ yyl_try(pTHX_ char initial_state, char *s, STRLEN len,
     case 4:
     case 26:
         /* emulate EOF on ^D or ^Z */
-        return yyl_fake_eof(aTHX_ LEX_FAKE_EOF, FALSE, s, len,
-                            orig_keyword, gv, gvp, formbrack, saw_infix_sigil);
+        return yyl_fake_eof(aTHX_ LEX_FAKE_EOF, FALSE, s, len);
 
     case 0:
 	if ((!PL_rsfp || PL_lex_inwhat)
@@ -7327,8 +7321,7 @@ yyl_try(pTHX_ char initial_state, char *s, STRLEN len,
 		update_debugger_info(PL_linestr, NULL, 0);
 	    return RETRY();
 	}
-        return yyl_fake_eof(aTHX_ 0, cBOOL(PL_rsfp), s, len,
-                            orig_keyword, gv, gvp, formbrack, saw_infix_sigil);
+        return yyl_fake_eof(aTHX_ 0, cBOOL(PL_rsfp), s, len);
 
     case '\r':
 #ifdef PERL_STRICT_CR
@@ -7342,8 +7335,7 @@ yyl_try(pTHX_ char initial_state, char *s, STRLEN len,
 
     case '#':
     case '\n':
-        return yyl_eol(aTHX_ s, len, orig_keyword, gv, gvp,
-                       formbrack, fake_eof, saw_infix_sigil);
+        return yyl_eol(aTHX_ s, len);
 
     case '-':
         return yyl_hyphen(aTHX_ s);
@@ -7683,8 +7675,8 @@ yyl_try(pTHX_ char initial_state, char *s, STRLEN len,
 	CV *cv = NULL;
 	PADOFFSET off = 0;
 	OP *rv2cv_op = NULL;
+	I32 orig_keyword = 0;
 
-	orig_keyword = 0;
 	gv = NULL;
 	gvp = NULL;
 
@@ -8103,8 +8095,7 @@ yyl_try(pTHX_ char initial_state, char *s, STRLEN len,
 	case KEY___END__:
             if (PL_rsfp && (!PL_in_eval || PL_tokenbuf[2] == 'D'))
                 yyl_data_handle(aTHX);
-            return yyl_fake_eof(aTHX_ LEX_FAKE_EOF, bof, s, len,
-                                orig_keyword, gv, gvp, formbrack, saw_infix_sigil);
+            return yyl_fake_eof(aTHX_ LEX_FAKE_EOF, bof, s, len);
 
 	case KEY___SUB__:
 	    FUN0OP(CvCLONE(PL_compcv)
@@ -9302,7 +9293,7 @@ Perl_yylex(pTHX)
 	assert(PL_lex_formbrack);
 	s = scan_formline(PL_bufptr);
 	if (!PL_lex_formbrack) {
-            return yyl_try(aTHX_ '}', s, 0, 0, NULL, NULL, 1, 0, saw_infix_sigil);
+            return yyl_try(aTHX_ '}', s, 0, 1, saw_infix_sigil);
 	}
 	PL_bufptr = s;
 	return yylex();
@@ -9319,7 +9310,7 @@ Perl_yylex(pTHX)
         return yyl_sigvar(aTHX_ s);
     }
 
-    return yyl_try(aTHX_ 0, s, 0, 0, NULL, NULL, 0, 0, saw_infix_sigil);
+    return yyl_try(aTHX_ 0, s, 0, 0, saw_infix_sigil);
 }
 
 
