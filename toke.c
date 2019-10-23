@@ -8430,8 +8430,8 @@ yyl_keylookup(pTHX_ char *s, GV *gv, bool bof, bool saw_infix_sigil)
     /* x::* is just a word, unless x is "CORE" */
     if (!anydelim && *s == ':' && s[1] == ':') {
         if (memEQs(PL_tokenbuf, len, "CORE"))
-            return yyl_key_core(aTHX_ s, len, tmp, orig_keyword, c, bof, saw_infix_sigil);
-        return yyl_just_a_word(aTHX_ s, len, 0, orig_keyword, c, saw_infix_sigil);
+            return yyl_key_core(aTHX_ s, len, tmp, 0, c, bof, saw_infix_sigil);
+        return yyl_just_a_word(aTHX_ s, len, 0, 0, c, saw_infix_sigil);
     }
 
     d = s;
@@ -8504,8 +8504,7 @@ yyl_keylookup(pTHX_ char *s, GV *gv, bool bof, bool saw_infix_sigil)
                 if (!c.gv) {
                     sv_free(c.sv);
                     c.sv = NULL;
-                    return yyl_just_a_word(aTHX_ s, len, tmp, orig_keyword,
-                                           c, saw_infix_sigil);
+                    return yyl_just_a_word(aTHX_ s, len, tmp, 0, c, saw_infix_sigil);
                 }
             }
             else {
@@ -8514,8 +8513,7 @@ yyl_keylookup(pTHX_ char *s, GV *gv, bool bof, bool saw_infix_sigil)
                 c.cv = find_lexical_cv(c.off);
             }
             c.lex = TRUE;
-            return yyl_just_a_word(aTHX_ s, len, tmp, orig_keyword,
-                                   c, saw_infix_sigil);
+            return yyl_just_a_word(aTHX_ s, len, tmp, 0, c, saw_infix_sigil);
         }
         c.off = 0;
     }
