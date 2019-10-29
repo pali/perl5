@@ -8,6 +8,7 @@ BEGIN {
         exit 0;
     }
     require 'test.pl';
+    #skip_all("temporary");
 }
 
 use warnings;

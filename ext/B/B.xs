@@ -1022,10 +1022,13 @@ next(o)
                  * whereas other PVOPs point to a null terminated string.
                  * For trans, for now just return the whole struct as a
                  * string and let the caller unpack() it */
+                    DEBUG_U(PerlIO_printf(Perl_debug_log,"%s: %d\n", __FILE__, __LINE__));
 		if (   cPVOPo->op_type == OP_TRANS
                     || cPVOPo->op_type == OP_TRANSR)
                 {
                     const OPtrans_map *const tbl = (OPtrans_map*)cPVOPo->op_pv;
+                    DEBUG_U(PerlIO_printf(Perl_debug_log,"%s: %d: %p\n", __FILE__, __LINE__, cPVOPo->op_pv));
+                    DEBUG_U(PerlIO_printf(Perl_debug_log,"size=%d\n", tbl->size));
 		    ret = newSVpvn_flags(cPVOPo->op_pv,
                                               (char*)(&tbl->map[tbl->size + 1])
                                             - (char*)tbl,
