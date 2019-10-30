@@ -20586,9 +20586,10 @@ Perl_regprop(pTHX_ const regexp *prog, SV *sv, const regnode *o, const regmatch_
             else {
                 SV *sv_dat= MUTABLE_SV(progi->data->data[ parno ]);
                 I32 *nums=(I32*)SvPVX(sv_dat);
-                parno = nums[0];
-                SV **name= av_fetch(name_list, parno, 0 );
+                SV **name;
                 I32 n;
+                parno = nums[0];
+                name= av_fetch(name_list, parno, 0 );
                 if (name) {
                     for ( n=0; n<SvIVX(sv_dat); n++ ) {
                         Perl_sv_catpvf(aTHX_ sv, "%s%" IVdf,
